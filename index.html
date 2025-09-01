@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tap Tennis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #2E7D32, #4CAF50);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 5px;
+        }
+
+        .score-board {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .set-score {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .game-score {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2E7D32;
+        }
+
+        .court {
+            background: #8BC34A;
+            border: 3px solid white;
+            border-radius: 10px;
+            height: 120px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .court::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: white;
+            transform: translateY(-50%);
+        }
+
+        .court::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            background: white;
+            transform: translateX(-50%);
+        }
+
+        .player-positions {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        .player {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+        }
+
+        .player.you {
+            background: #1976D2;
+        }
+
+        .player.ai {
+            background: #D32F2F;
+        }
+
+        .game-status {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #2E7D32;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .shot-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .shot-button {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2E7D32;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .shot-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .shot-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .shot-button.conservative {
+            border-left: 5px solid #4CAF50;
+        }
+
+        .shot-button.risky {
+            border-left: 5px solid #FF9800;
+        }
+
+        .shot-name {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .shot-stats {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .controls {
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .new-game-btn {
+            background: linear-gradient(145deg, #1976D2, #1565C0);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .new-game-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .tiebreak-indicator {
+            background: #FF9800;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 320px) {
+            .game-container {
+                padding: 5px;
+            }
+            
+            .shot-button {
+                padding: 15px;
+                min-height: 70px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🎾 Tap Tennis</h1>
+        </div>
+
+        <div class="score-board">
+            <div class="set-score">
+                <span>You: <span id="player-set-score">0</span></span>
+                <span>AI: <span id="ai-set-score">0</span></span>
+            </div>
+            <div class="game-score">
+                <span id="player-game-score">0</span>
+                <span id="ai-game-score">0</span>
+            </div>
+            <div id="tiebreak-indicator" class="tiebreak-indicator" style="display: none;">
+                Tiebreak!
+            </div>
+        </div>
+
+        <div class="court">
+            <div class="player-positions">
+                <div class="player you">YOU</div>
+                <div class="player ai">AI</div>
+            </div>
+        </div>
+
+        <div class="game-status" id="game-status">
+            Choose your shot to start the rally!
+        </div>
+
+        <div class="shot-options" id="shot-options">
+            <button class="shot-button conservative" id="conservative-shot">
+                <div class="shot-name">Safe Shot</div>
+                <div class="shot-stats">Success: <span id="conservative-success">85</span>% | Winner: <span id="conservative-winner">15</span>%</div>
+            </button>
+            <button class="shot-button risky" id="risky-shot">
+                <div class="shot-name">Power Shot</div>
+                <div class="shot-stats">Success: <span id="risky-success">60</span>% | Winner: <span id="risky-winner">35</span>%</div>
+            </button>
+        </div>
+
+        <div class="controls">
+            <button class="new-game-btn" id="new-game-btn" onclick="startNewGame()">
+                New Game
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class TapTennis {
+            constructor() {
+                this.playerSetScore = 0;
+                this.aiSetScore = 0;
+                this.playerGameScore = 0;
+                this.aiGameScore = 0;
+                this.playerTiebreakScore = 0;
+                this.aiTiebreakScore = 0;
+                this.isTiebreak = false;
+                this.gameEnded = false;
+                this.rallyInProgress = false;
+                
+                this.gameScoreNames = ['0', '15', '30', '40'];
+                
+                this.initializeEventListeners();
+                this.updateDisplay();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('conservative-shot').addEventListener('click', () => this.makeShot('conservative'));
+                document.getElementById('risky-shot').addEventListener('click', () => this.makeShot('risky'));
+                
+                // Touch event optimization
+                document.getElementById('conservative-shot').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                });
+                document.getElementById('risky-shot').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                });
+            }
+
+            makeShot(shotType) {
+                if (this.gameEnded || this.rallyInProgress) return;
+                
+                this.rallyInProgress = true;
+                this.disableButtons();
+                
+                const shotData = this.getShotData(shotType);
+                const success = Math.random() < shotData.successRate;
+                
+                if (!success) {
+                    this.updateStatus(`Your ${shotData.name} went ${this.getErrorType()}! AI wins the point.`);
+                    setTimeout(() => {
+                        this.aiWinsPoint();
+                        this.endRally();
+                    }, 1500);
+                    return;
+                }
+                
+                const isWinner = Math.random() < shotData.winnerRate;
+                if (isWinner) {
+                    this.updateStatus(`Great ${shotData.name}! Winner! You win the point.`);
+                    setTimeout(() => {
+                        this.playerWinsPoint();
+                        this.endRally();
+                    }, 1500);
+                    return;
+                }
+                
+                // Rally continues - AI responds
+                this.updateStatus(`Good ${shotData.name}! AI returns...`);
+                setTimeout(() => {
+                    this.aiResponds();
+                }, 1000);
+            }
+
+            aiResponds() {
+                // AI strategy: 70% conservative, 30% risky
+                const aiShotType = Math.random() < 0.7 ? 'conservative' : 'risky';
+                const shotData = this.getShotData(aiShotType);
+                const success = Math.random() < shotData.successRate;
+                
+                if (!success) {
+                    this.updateStatus(`AI's ${shotData.name.toLowerCase()} went ${this.getErrorType()}! You win the point.`);
+                    setTimeout(() => {
+                        this.playerWinsPoint();
+                        this.endRally();
+                    }, 1500);
+                    return;
+                }
+                
+                const isWinner = Math.random() < shotData.winnerRate;
+                if (isWinner) {
+                    this.updateStatus(`AI hits a winner! AI wins the point.`);
+                    setTimeout(() => {
+                        this.aiWinsPoint();
+                        this.endRally();
+                    }, 1500);
+                    return;
+                }
+                
+                // Rally continues - player's turn
+                this.updateStatus('AI returns the ball. Choose your next shot!');
+                setTimeout(() => {
+                    this.endRally();
+                }, 1000);
+            }
+
+            getShotData(shotType) {
+                if (shotType === 'conservative') {
+                    return {
+                        name: 'Safe Shot',
+                        successRate: 0.85,
+                        winnerRate: 0.15
+                    };
+                } else {
+                    return {
+                        name: 'Power Shot',
+                        successRate: 0.60,
+                        winnerRate: 0.35
+                    };
+                }
+            }
+
+            getErrorType() {
+                const errors = ['into the net', 'wide', 'long', 'out'];
+                return errors[Math.floor(Math.random() * errors.length)];
+            }
+
+            playerWinsPoint() {
+                if (this.isTiebreak) {
+                    this.playerTiebreakScore++;
+                    this.checkTiebreakWin();
+                } else {
+                    this.playerGameScore++;
+                    this.checkGameWin();
+                }
+                this.updateDisplay();
+            }
+
+            aiWinsPoint() {
+                if (this.isTiebreak) {
+                    this.aiTiebreakScore++;
+                    this.checkTiebreakWin();
+                } else {
+                    this.aiGameScore++;
+                    this.checkGameWin();
+                }
+                this.updateDisplay();
+            }
+
+            checkGameWin() {
+                // Regular game win conditions
+                if ((this.playerGameScore >= 4 || this.aiGameScore >= 4)) {
+                    if (this.playerGameScore >= this.aiGameScore + 2) {
+                        this.playerWinsGame();
+                        return;
+                    } else if (this.aiGameScore >= this.playerGameScore + 2) {
+                        this.aiWinsGame();
+                        return;
+                    }
+                }
+            }
+
+            checkTiebreakWin() {
+                if ((this.playerTiebreakScore >= 7 || this.aiTiebreakScore >= 7)) {
+                    if (this.playerTiebreakScore >= this.aiTiebreakScore + 2) {
+                        this.playerWinsGame();
+                        return;
+                    } else if (this.aiTiebreakScore >= this.playerTiebreakScore + 2) {
+                        this.aiWinsGame();
+                        return;
+                    }
+                }
+            }
+
+            playerWinsGame() {
+                this.playerSetScore++;
+                this.resetGameScore();
+                this.checkSetWin();
+            }
+
+            aiWinsGame() {
+                this.aiSetScore++;
+                this.resetGameScore();
+                this.checkSetWin();
+            }
+
+            resetGameScore() {
+                this.playerGameScore = 0;
+                this.aiGameScore = 0;
+                this.playerTiebreakScore = 0;
+                this.aiTiebreakScore = 0;
+                this.isTiebreak = false;
+                document.getElementById('tiebreak-indicator').style.display = 'none';
+            }
+
+            checkSetWin() {
+                if (this.playerSetScore >= 6 && this.aiSetScore >= 6) {
+                    if (this.playerSetScore === this.aiSetScore) {
+                        // Start tiebreak
+                        this.isTiebreak = true;
+                        document.getElementById('tiebreak-indicator').style.display = 'block';
+                        this.updateStatus('Tiebreak! First to 7 points (by 2) wins the set!');
+                    } else if (this.playerSetScore >= this.aiSetScore + 2) {
+                        this.endGame('You win the set!');
+                    } else if (this.aiSetScore >= this.playerSetScore + 2) {
+                        this.endGame('AI wins the set!');
+                    }
+                } else if (this.playerSetScore >= 6 && this.playerSetScore >= this.aiSetScore + 2) {
+                    this.endGame('You win the set!');
+                } else if (this.aiSetScore >= 6 && this.aiSetScore >= this.playerSetScore + 2) {
+                    this.endGame('AI wins the set!');
+                } else {
+                    this.updateStatus('New game! Choose your shot to start the rally!');
+                }
+                
+                this.updateDisplay();
+            }
+
+            endGame(message) {
+                this.gameEnded = true;
+                this.updateStatus(message + ' Tap "New Game" to play again.');
+                this.disableButtons();
+            }
+
+            endRally() {
+                this.rallyInProgress = false;
+                if (!this.gameEnded) {
+                    this.enableButtons();
+                }
+            }
+
+            disableButtons() {
+                document.getElementById('conservative-shot').disabled = true;
+                document.getElementById('risky-shot').disabled = true;
+            }
+
+            enableButtons() {
+                document.getElementById('conservative-shot').disabled = false;
+                document.getElementById('risky-shot').disabled = false;
+            }
+
+            updateStatus(message) {
+                document.getElementById('game-status').textContent = message;
+            }
+
+            updateDisplay() {
+                document.getElementById('player-set-score').textContent = this.playerSetScore;
+                document.getElementById('ai-set-score').textContent = this.aiSetScore;
+                
+                if (this.isTiebreak) {
+                    document.getElementById('player-game-score').textContent = this.playerTiebreakScore;
+                    document.getElementById('ai-game-score').textContent = this.aiTiebreakScore;
+                } else {
+                    document.getElementById('player-game-score').textContent = this.getGameScoreDisplay(this.playerGameScore, this.aiGameScore);
+                    document.getElementById('ai-game-score').textContent = this.getGameScoreDisplay(this.aiGameScore, this.playerGameScore);
+                }
+            }
+
+            getGameScoreDisplay(playerScore, opponentScore) {
+                if (playerScore < 4 && opponentScore < 4) {
+                    return this.gameScoreNames[playerScore];
+                } else if (playerScore < 3 || opponentScore < 3) {
+                    return this.gameScoreNames[playerScore];
+                } else if (playerScore === opponentScore) {
+                    return 'DEUCE';
+                } else if (playerScore > opponentScore) {
+                    return 'ADV';
+                } else {
+                    return this.gameScoreNames[Math.min(playerScore, 3)];
+                }
+            }
+
+            reset() {
+                this.playerSetScore = 0;
+                this.aiSetScore = 0;
+                this.playerGameScore = 0;
+                this.aiGameScore = 0;
+                this.playerTiebreakScore = 0;
+                this.aiTiebreakScore = 0;
+                this.isTiebreak = false;
+                this.gameEnded = false;
+                this.rallyInProgress = false;
+                
+                document.getElementById('tiebreak-indicator').style.display = 'none';
+                this.updateStatus('Choose your shot to start the rally!');
+                this.enableButtons();
+                this.updateDisplay();
+            }
+        }
+
+        // Global game instance
+        let game;
+
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            game = new TapTennis();
+        });
+
+        function startNewGame() {
+            if (game) {
+                game.reset();
+            } else {
+                game = new TapTennis();
+            }
+        }
+
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+        });
+    </script>
+</body>
+</html>
